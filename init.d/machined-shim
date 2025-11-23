@@ -1,0 +1,36 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          machined-shim
+# Required-Start:    $remote_fd dbus
+# Required-Stop:     dbus
+# Default-Start:     2 3 4 5
+# Default-Stop:
+# Short-Description: A shim providing the interface for machinectl shell
+### END INIT INFO
+
+if [ "$INIT_D_SCRIPT_SOURCED" != true ]; then
+    set -- "$0" "$@"
+    INIT_D_SCRIPT_SOURCED=true . /lib/init/init-d-script
+fi
+
+DAEMON="/usr/local/bin/machined-shim"
+START_ARGS="--background --make-pidfile --output /var/log/machined-shim.log"
+
+do_start_cmd_override() {
+    start-stop-daemon --start --quiet \
+        --pidfile "$PIDFILE" \
+        --name "$COMMAND_NAME" \
+        --exec /usr/bin/python3 \
+        --startas "$DAEMON" $START_ARGS -- $DAEMON_ARGS
+}
+
+do_stop_cmd_override() {
+    start-stop-daemon --stop --quiet \
+        --retry=CONT/0/TERM/30/KILL/5 \
+        --pidfile "$PIDFILE" \
+        --name "$COMMAND_NAME" \
+        --exec /usr/bin/python3
+    RET="$?"
+    rm -f "$PIDFILE"
+    return "$RET"
+}
