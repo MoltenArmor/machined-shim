@@ -1,7 +1,7 @@
 #!/bin/sh
 ### BEGIN INIT INFO
 # Provides:          machined-shim
-# Required-Start:    $remote_fd dbus
+# Required-Start:    dbus
 # Required-Stop:     dbus
 # Default-Start:     2 3 4 5
 # Default-Stop:

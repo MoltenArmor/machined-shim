@@ -31,7 +31,7 @@ def sigchld_handler(*_):
             pid, _ = os.waitpid(-1, os.WNOHANG)
             if pid == 0:
                 break
-            logging.info(f"Reapped child: {pid}")
+            logging.info(f"Reaped child: {pid}")
 
         except ChildProcessError:
             break
@@ -98,7 +98,13 @@ def start_transient_unit(properties: dict) -> int:
                 try:
                     with open("/etc/default/locale") as f:
                         os.environ.update(
-                            dict([e.strip().split("=", 1) for e in f.readlines()])
+                            dict(
+                                [
+                                    e.strip().split("=", 1)
+                                    for e in f.readlines()
+                                    if e.strip() and not e.startswith("#")
+                                ]
+                            )
                         )
                 except FileNotFoundError:
                     os.environ.update({"LANG": "POSIX"})
@@ -176,7 +182,7 @@ if __name__ == "__main__":
                     # [2]: Properties
                     # For convenience, we convert properties to dict
                     properties = dict(msg.body[2])
-                    logging.info(f"Received properties: {[properties]}")
+                    logging.info(f"Received properties: {properties}")
 
                     pid = start_transient_unit(properties)
 
