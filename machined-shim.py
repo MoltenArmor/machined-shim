@@ -6,6 +6,7 @@
 # ]
 # ///
 # Author: Kwok "Molten Armor" Guy
+
 import os, os.path, sys, signal, pwd
 from jeepney.io.blocking import open_dbus_connection, Proxy
 from jeepney import (
@@ -18,11 +19,13 @@ from jeepney import (
 import logging
 from typing import Any
 
-logging.basicConfig(level=logging.INFO)
+type Variant = Any  # pyright: ignore[reportExplicitAny]
 
 SERVICE = "org.freedesktop.systemd1"
 INTERFACE = "org.freedesktop.systemd1.Manager"
 PATH = "/org/freedesktop/systemd1"
+
+logging.basicConfig(level=logging.INFO)
 
 
 def sigchld_handler(*_):
@@ -37,7 +40,7 @@ def sigchld_handler(*_):
             break
 
 
-def start_transient_unit(properties: dict[str, Any]) -> int:
+def start_transient_unit(properties: dict[str, Variant]) -> int:
     # D-Bus variants are translated to Python tuple
     # [0]: Signature
     # [1]: Value
