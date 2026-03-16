@@ -6,7 +6,6 @@
 # ]
 # ///
 # Author: Kwok "Molten Armor" Guy
-# pyright: standard
 import os, os.path, sys, signal, pwd
 from jeepney.io.blocking import open_dbus_connection, Proxy
 from jeepney import (
@@ -156,7 +155,7 @@ def start_transient_unit(properties: dict) -> int:
     return pid
 
 
-if __name__ == "__main__":
+def main():
     signal.signal(signal.SIGCHLD, sigchld_handler)
 
     with open_dbus_connection(bus="SYSTEM", enable_fds=True) as conn:
@@ -182,6 +181,7 @@ if __name__ == "__main__":
                     # [2]: Properties
                     # For convenience, we convert properties to dict
                     properties = dict(msg.body[2])
+
                     logging.info(f"Received properties: {properties}")
 
                     pid = start_transient_unit(properties)
@@ -200,3 +200,7 @@ if __name__ == "__main__":
                             msg, "org.freedesktop.DBus.Error.Failed", "s", (str(e),)
                         )
                     )
+
+
+if __name__ == "__main__":
+    main()
