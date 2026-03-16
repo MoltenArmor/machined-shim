@@ -16,6 +16,7 @@ from jeepney import (
     HeaderFields,
 )
 import logging
+from typing import Any
 
 logging.basicConfig(level=logging.INFO)
 
@@ -36,7 +37,7 @@ def sigchld_handler(*_):
             break
 
 
-def start_transient_unit(properties: dict) -> int:
+def start_transient_unit(properties: dict[str, Any]) -> int:
     # D-Bus variants are translated to Python tuple
     # [0]: Signature
     # [1]: Value
