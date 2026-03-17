@@ -67,11 +67,12 @@ def start_transient_unit(properties: dict[str, Variant]) -> int:
     if not os.access(path, os.X_OK):
         raise PermissionError(f"{path} is not executable!")
 
+    # Fail fast
     if user:
         try:
-            pwd.getpwnam(user)
+            _ = pwd.getpwnam(user)
         except KeyError:
-            raise SystemError(f"User {user} not found")
+            raise SystemError(f"User {user} does not exist")
 
     if workdir:
         if workdir != "-~" and not os.path.isdir(workdir):
@@ -84,34 +85,31 @@ def start_transient_unit(properties: dict[str, Variant]) -> int:
         try:
             os.setsid()
 
-            if env:
-                if user:
-                    userdb = pwd.getpwnam(user)
-                else:
-                    userdb = pwd.getpwnam("root")
+            userdb = pwd.getpwnam(user) if user else pwd.getpwnam("root")
+            os.environ.update(
+                {
+                    "USER": userdb.pw_name,
+                    "HOME": userdb.pw_dir,
+                    "SHELL": userdb.pw_shell,
+                }
+            )
 
-                os.environ.update(
-                    {
-                        "USER": userdb.pw_name,
-                        "HOME": userdb.pw_dir,
-                        "SHELL": userdb.pw_shell,
-                    }
-                )
-
-                try:
-                    with open("/etc/default/locale") as f:
-                        os.environ.update(
-                            dict(
-                                [
-                                    e.strip().split("=", 1)
-                                    for e in f.readlines()
-                                    if e.strip() and not e.startswith("#")
-                                ]
-                            )
+            try:
+                with open("/etc/default/locale") as f:
+                    os.environ.update(
+                        dict(
+                            [
+                                e.strip().split("=", 1)
+                                for e in f.readlines()
+                                if e.strip() and not e.startswith("#")
+                            ]
                         )
-                except FileNotFoundError:
-                    os.environ.update({"LANG": "POSIX"})
+                    )
+            except FileNotFoundError:
+                os.environ.update({"LANG": "POSIX"})
 
+            # Overrides User=
+            if env:
                 os.environ.update(dict([e.split("=", 1) for e in env]))
 
             if user:
@@ -134,7 +132,7 @@ def start_transient_unit(properties: dict[str, Variant]) -> int:
             if stderr:
                 os.dup2(stderr.fileno(), 2)
 
-            for fd in (_ := os.listdir("/proc/self/fd")):
+            for fd in os.listdir("/proc/self/fd"):
                 if fd not in ("0", "1", "2"):
                     try:
                         os.close(int(fd))
